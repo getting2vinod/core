@@ -28,3 +28,4 @@ server/app/vspheretest.js
 server/config
 server/logs
 .project
+server/gitHub
