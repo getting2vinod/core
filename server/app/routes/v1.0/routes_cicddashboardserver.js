@@ -2,7 +2,7 @@ var cicdDashboardService = require('_pr/services/cicdDashboardService');
 var async = require('async');
 var validate = require('express-validation');
 var cicdDashboardServerValidator = require('_pr/validators/cicdDashboardServerValidator');
-
+var logger = require('_pr/logger')(module);
 module.exports.setRoutes = function(app, sessionVerificationFunc) {
 	app.all('/cicd-dashboardservice/*', sessionVerificationFunc);
 
@@ -126,6 +126,31 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
         );
     }
 
+
+    app.post('/cicd-dashboardservice/restartdashboard',restartdashboard);
+
+    function restartdashboard(req,res) {
+        cicdDashboardService.restartDashboard(req.body,function(status){
+            if(status){
+                res.status(200).send({"message":"done"});
+                return;
+            }
+            else
+                {
+                    res.status(400).send({"message":"failed"});
+                    //logger.debug()
+                }
+            
+        },
+        function(stdOut){
+            logger.debug(stdOut);
+        },
+        function(stdErr){
+            logger.debug(stdErr);
+            res.status(400).send({"message":stdErr});
+        });
+    }
+    
 
 
 

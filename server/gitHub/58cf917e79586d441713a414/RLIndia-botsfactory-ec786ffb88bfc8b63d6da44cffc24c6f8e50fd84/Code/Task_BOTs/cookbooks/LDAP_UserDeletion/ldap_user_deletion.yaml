@@ -1,0 +1,43 @@
+## ID - auto generated or manual alpha numeric, must be unique across RLC
+id: ldap_user_deletion
+## Name - human readable name (e.g., Install MongoDB, Change JIRA password...)
+name: LDAP Server:Delete User
+## Desc - Few line brief about the BOT and its characteristics.
+desc: Execute job to delete user from LDAP(OpenDJ) Server.
+## Category -> Check, Run, Meta, Predict...
+botCategory : User Management
+action:  Run
+## Type ->  Chef, Script, UI, etc...
+type: chef
+## Sample input form
+##    form    - its form based input
+##    name    - variable name
+##    label   - label text
+##    type    - text, password, file, list
+##    default - sample grayed text to help user.
+
+input:
+  - form:
+    - email_id:
+      label: Email
+      type: text
+      default: test@gmail.com
+## Sample output collection
+##    images  - list of images and its locations
+##    logs    - list of text logs
+##    msg     - information to convey back to user
+##    {}      - data list should be as much as {}
+##              fudged in order
+
+output:
+  - images:
+     - /web/root/images/output1.img
+     - http://s3.amazonaws.com/mybucket/output2.img
+  - logs:
+     - /var/log/docker/docker.log
+     - /var/log/tomcat/catlina.log
+  - msgs:
+      - text: "Deletion of user {} on LDAP Server {},{}"
+      - data:
+        - email_id
+        - status

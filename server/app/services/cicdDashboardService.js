@@ -25,6 +25,14 @@ var promisify = require("promisify-node");
 var fse = promisify(require("fs-extra"));
 
 
+var Process = require("_pr/lib/utils/process");
+var childProcess = require('child_process');
+var exec = childProcess.exec;
+
+var SSHExec = require('_pr/lib/utils/sshexec');
+
+
+
 var cicdDashboardService = module.exports = {};
 
 
@@ -66,6 +74,7 @@ cicdDashboardService.createcicdDashboardServer = function createcicdDashboardSer
         }
     });
 };
+
 
 cicdDashboardService.updatecicdDashboardServer = function updatecicdDashboardServer(cicdDashboardServerId, cicdDashboardObj, callback) {
     
@@ -210,6 +219,44 @@ cicdDashboardService.getcicdDashboardServerList = function getcicdDashboardServe
         return;
     });
 };
+
+cicdDashboardService.restartDashboard = function restartDashboard(config,callback,callbackOnStdOut, callbackOnStdErr){
+    if(config){
+        logger.debug(JSON.stringify(config));
+        // using ssh2
+        var cmd = '';
+        //shifting to the correct folder
+         cmd += "cd " + config.dashboardConnection.dashboardSetUppath + ' && ';
+        cmd += 'echo \"' + config.dashboardConnection.dashboardServerPassword + '\" | sudo -S';
+        
+       
+        cmd += ' ' + config.dashboardRestart.dashboardScriptName;
+        cmd += ' ' + config.dashboardRestart.catalystAppServerURLwithPort;
+        cmd += ' ' + config.dashboardRestart.dashboardDatabaseHostName;
+        cmd += ' ' + config.dashboardRestart.catalystUserName;
+        cmd += ' "' + config.dashboardRestart.catalystPassword + '"';
+        cmd += ' ' + config.dashboardRestart.dashboardHostName;
+        cmd += ' ' + config.dashboardRestart.buildFlag;
+        
+        logger.debug('cmd ' + cmd);
+        //Building the connection option
+        var options = {
+            "host":config.dashboardConnection.dashboardDomainName,
+            "port":"22",
+            "username":config.dashboardConnection.dashbaordServerUserName,
+            "password":config.dashboardConnection.dashboardServerPassword
+
+        }
+
+        var sshExec = new SSHExec(options);
+        logger.debug('***********************', options);
+        sshExec.exec(cmd, callback, callbackOnStdOut, callbackOnStdErr);
+       // callback(true);
+    }
+    else{
+        callback(false);
+    }
+}
 
 function formatcicdDashboardResponse(cicdDashboard,callback) {
 	var formatted = {
