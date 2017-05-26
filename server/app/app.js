@@ -44,7 +44,9 @@ var mongoose = require('mongoose');
 var MongoStore = require('connect-mongo')(expressSession);
 var mongoDbConnect = require('_pr/lib/mongodb');
 var mongoose = require('mongoose');
-
+var lbapp = require('./routes/lbroutes/server');
+var loopback = require('loopback');
+// var lbboot = require('loopback-boot');
 
 
 
@@ -112,6 +114,12 @@ app.set('sport', appConfig.app_run_secure_port);
 app.use(expressCompression());
 app.use(expressFavicon(__dirname + '/../../client/htmls/private/img/favicons/favicon.ico'));
 app.use(expressCookieParser());
+
+
+
+
+
+
 
 logger.debug("Initializing Session store in mongo");
 
@@ -187,6 +195,7 @@ var routerV2 = require('./routes/v2.0');
 app.use('/api/v2.0', routerV2);
 
 
+
 app.use(function(req, res, next) {
     if (req.accepts('json')) {
         var errorResponse = {
@@ -197,6 +206,12 @@ app.use(function(req, res, next) {
         return;
     }
 });
+
+//******* Loopback initialization *******************/
+// var lbapp = loopback();
+// lbboot(lbapp,__dirname + '/loopback');
+console.log('********************* IN Here *********************');
+
 
 var socketIORoutes = require('./routes/v1.0/socket.io/routes.js');
 socketIORoutes.setRoutes(io);
@@ -232,6 +247,7 @@ catalystSync.executeParallelScheduledTasks();
 catalystSync.executeScheduledBots();
 catalystSync.executeNewScheduledBots();
 catalystSync.getBotAuditLogData();
+
 server.listen(app.get('port'), function() {
     logger.debug('Express server listening on port ' + app.get('port'));
     require('_pr/services/noticeService.js').init(io,server.address());

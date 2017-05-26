@@ -1,0 +1,13 @@
+{
+  
+  "devops": {
+    "host": "localhost",
+    "port": 27017,
+    "url": "mongodb://localhost:27017/devops_new",
+    "database": "devops_new",
+    "password": "",
+    "name": "devops",
+    "user": "",
+    "connector": "mongodb"
+  }
+}
