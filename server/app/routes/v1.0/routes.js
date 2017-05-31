@@ -44,7 +44,7 @@ var vmimage = require('./routes_vmImages');
 var chefClientExecution = require('./routes_chefClientExecutionResponse');
 var appConfig = require('_pr/config');
 var cloudformation = require('./routes_cloudformation');
-var notification = require('./routes_notification');
+//var notification = require('./routes_notification'); //included into server.js
 var globalsettings = require('./routes_globalsettings');
 var tracks = require('./routes_track');
 var trackType = require('./routes_trackType');
@@ -271,7 +271,7 @@ module.exports.setRoutes = function(app) {
         app.use('/uploads', expressServeStatic(appConfig.staticUploadDir));
     }
     // for notification
-    notification.setRoutes(app);
+    //notification.setRoutes(app);
 
     app.use(errorHandler);
 

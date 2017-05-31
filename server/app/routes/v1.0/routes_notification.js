@@ -44,10 +44,17 @@ var crontab = require('node-crontab');
 var vmwareProvider = require('_pr/model/classes/masters/cloudprovider/vmwareCloudProvider.js');
 var VmwareCloud = require('_pr/lib/vmware.js');
 
-var socketIo = require('_pr/socket.io').getInstance();
 
-module.exports.setRoutes = function(app) {
+
+module.exports.setRoutes = function(app,socketIo) {
     // setting up socket.io
+    // var io = socketIo.getInstance(server, {
+        //     log: false,
+        //     authFunc: function(socket, next) {
+        //         sessionMiddleware(socket.request, socket.request.res, next);
+        //     }
+        // });
+    //var socketIo = require('_pr/socket.io').getInstance();
     var socketCloudFormationAutoScate = socketIo.of('/cloudFormationAutoScaleGroup');
 
     socketCloudFormationAutoScate.on('connection', function(socket) {

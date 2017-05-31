@@ -1,14 +1,24 @@
-module.exports = function(app){
+var logger = require('_pr/logger')(module);
 
-	var router = app.loopback.Router();
-	router.get('/test',function(req,res){
-		res.send("testing...");
-	});
 
-	router.get('/lbapi',function(req,res,next){
-		console.log('hit');
-		next();
-	});
-	
-	app.use(router);
+module.exports = function(app) {
+
+   // logger.debug('Setting up application routes');
+    var routes = require('../../routes/v1.0/routes.js');
+    console.log(routes);
+    console.log("**********************************************************");
+   
+    var routerV1 = app.loopback.Router();
+    routes.setRoutes(routerV1);
+    app.use(routerV1);
+
+    app.use('/api/v1.0', routerV1);
+
+
+var routerV2 = require('../../routes/v2.0');
+
+ console.log(routerV2);
+    logger.debug('Setting up version 2 routes');
+
+    app.use('/api/v2.0', routerV2);
 }
