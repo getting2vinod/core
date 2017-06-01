@@ -5,7 +5,7 @@ module.exports = function(app) {
 
     // logger.debug('Setting up application routes');
     var routes = require('../../routes/v1.0/routes.js');
-   //console.log(routes);
+    //console.log(routes);
     console.log("**********************************************************");
 
     var routerV1 = app.loopback.Router();
@@ -22,4 +22,7 @@ module.exports = function(app) {
 
     app.use('/api/v2.0', routerV2);
     logger.debug("done");
+
+
+    
 }
