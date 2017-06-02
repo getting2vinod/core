@@ -89,7 +89,12 @@ var routesResourceMap = require('./routes_resourceMap');
  * Change app to router in internal routes files
  */
 
-module.exports.setRoutes = function(app) {
+module.exports = setRoutes;
+
+function setRoutes() {
+    logger.debug("IN setRoutes");
+    return function redirect_routes(req,res,next) {
+    var app = app.loopback.Router();
 
     app.use(cors());
 
@@ -293,4 +298,6 @@ module.exports.setRoutes = function(app) {
             return res.status(err.status).send(errorResponse);
         }
     }
+    next()
+}
 }

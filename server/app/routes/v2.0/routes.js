@@ -8,9 +8,6 @@ var logger = require('_pr/logger')(module);
 
 var router = express.Router();
 
-
-
-
 router.use(Authentication.pattern, Authentication.router);
 
 if (Authentication.sessionVerifier) {

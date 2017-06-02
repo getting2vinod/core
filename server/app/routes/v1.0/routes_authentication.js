@@ -61,12 +61,12 @@ module.exports.setRoutes = function(app) {
                                 res.send(err);
                             } else {
 
-                                res.send(200);
+                                res.sendStatus(200);
                                 return;
                             }
                         });
                     } else {
-                        res.send(200);
+                        res.sendStatus(200);
                         return;
                     }
 
@@ -107,7 +107,7 @@ module.exports.setRoutes = function(app) {
                                         return next(err);
                                     }
 
-                                    res.send(200, {
+                                    res.sendStatus(200, {
                                         token: authToken.token
                                     });
                                     return;
@@ -172,7 +172,7 @@ module.exports.setRoutes = function(app) {
                                     if (err) {
                                         return next(err);
                                     }
-                                    res.send(200, {
+                                    res.sendStatus(200, {
                                         token: authToken.token
                                     });
                                     return;
@@ -243,7 +243,7 @@ module.exports.setRoutes = function(app) {
                                                 return next(err);
                                             }
 
-                                            res.send(200, {
+                                            res.sendStatus(200, {
                                                 token: authToken.token
                                             });
                                             return;
@@ -306,7 +306,7 @@ module.exports.setRoutes = function(app) {
                     return;
                 }
                 logger.debug('token removed', JSON.stringify(removeCount));
-                res.send(200, {
+                res.sendStatus(200, {
                     message: 'token removed'
                 });
             });
@@ -341,10 +341,10 @@ module.exports.setRoutes = function(app) {
                     });
 
                     ldapClient.compare(req.params.username, function(err, status) {
-                        res.send(status)
+                        res.sendStatus(status);
                     });
                 } else {
-                    res.send(200);
+                    res.sendStatus(200);
                 }
 
             } else {
@@ -371,7 +371,7 @@ module.exports.setRoutes = function(app) {
                 AuthToken.findByToken(token, function(err, authToken) {
                     if (err) {
                         logger.error('Unable to fetch token from db', err);
-                        res.send(403);
+                        res.sendStatus(403);
                         return;
                     }
                     if (authToken) {
@@ -380,14 +380,14 @@ module.exports.setRoutes = function(app) {
                        // req.session.destroy();
                     } else {
                         logger.debug("No Valid Session for User - 403");
-                        res.send(403);
+                        res.sendStatus(403);
                     }
                 });
             } else if (tempToken) { //checking for temp token
                 tempAuthToken.findByToken(tempToken, function(err, tempTokenData) {
                     if (err) {
                         logger.error('Unable to fetch token from db', err);
-                        res.send(403);
+                        res.sendStatus(403);
                         return;
                     }
                     if (tempTokenData) {
@@ -396,13 +396,14 @@ module.exports.setRoutes = function(app) {
                         //req.session.destroy();
                     } else {
                         logger.debug("No Valid Session for User - 403");
-                        res.send(403);
+                        logger.debug(req.session.views);
+                        res.sendStatus(403);
                         // req.session.destroy();
                     }
                 });
             } else {
                 logger.debug("No Valid Session for User - 403");
-                res.send(403);
+                res.sendStatus(403);
             }
         }
     };
@@ -414,11 +415,11 @@ module.exports.setRoutes = function(app) {
                 next();
             } else {
                 logger.debug("Has Session && Session Has User But User is not Admin");
-                res.send(403);
+                res.sendStatus(403);
             }
         } else {
             logger.debug("No Valid Session for User - 403");
-            res.send(403);
+            res.sendStatus(403);
         }
     }
 
