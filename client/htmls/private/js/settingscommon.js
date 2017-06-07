@@ -277,8 +277,10 @@ function readMasterJson(id) {
 function readMasterJsontv(id) {
 	// debugger;
 	//alert(url);
+
 	if ((url.indexOf('List') >= 0 || url.indexOf('Create') >= 0) && url.indexOf('OrgList.html') < 0) {
 		// alert('in 1');
+        console.log('readmasterjsonnew'+url);
 		$.ajax({
 			type: "get",
 			dataType: "text",
@@ -297,6 +299,7 @@ function readMasterJsontv(id) {
 		return (d4ddata);
 	}
 	if (url.indexOf('OrgList.html') > 0) {
+        console.log('readmasterjsonneworglist'+url);
 		//alert('in 1');
 		$.ajax({
 			type: "get",
@@ -315,7 +318,6 @@ function readMasterJsontv(id) {
 		});
 		return (d4ddata);
 	} else {
-
 		$.ajax({
 			type: "get",
 			dataType: "text",
@@ -572,6 +574,8 @@ function CreateTableFromJson(formID, idFieldName, createFileName) {
 						if (inputC.attr('datatype') == 'list') {
 							v = v.replace(/,/g, "<br/>");
 							inputC.html('<a style="pointer:" data-toggle="popover" data-content="' + v + '" id="cellitem_' + i + '_' + k + '">View</a>');
+						}else if(inputC.attr('datatype') == 'link'){
+							inputC.html('<a target="new" href="' + v + '">Open</a>' );
 						} else {
 							inputC.html(v);
 						}
@@ -626,6 +630,9 @@ function CreateTableFromJson(formID, idFieldName, createFileName) {
 								case "CloudFormation":
 									imgpath = '/d4dMasters/image/4fdda07b-c1bd-4bad-b1f4-aca3a3d7ebd9__designtemplateicon__Cloudformation.png';
 									break;
+								case "Composite":
+									imgpath = '/d4dMasters/image/ba52a37d-c1e4-47bd-9391-327a95008a61__designtemplateicon__composite.png';
+									break;
 							}
 						}
 					} else {
@@ -651,6 +658,9 @@ function CreateTableFromJson(formID, idFieldName, createFileName) {
 								break;
 							case "CloudFormation":
 								imgpath = '/d4dMasters/image/4fdda07b-c1bd-4bad-b1f4-aca3a3d7ebd9__designtemplateicon__Cloudformation.png';
+								break;
+							case "Composite":
+								imgpath = '/d4dMasters/image/ba52a37d-c1e4-47bd-9391-327a95008a61__designtemplateicon__composite.png';
 								break;
 						}
 					}
@@ -725,6 +735,14 @@ function CreateTableFromJson(formID, idFieldName, createFileName) {
 					}
 				} else if (createFileName === 'CreateNexusServer.html') {
 					if (haspermission('puppetserver', 'modify')) {
+						hasEditPermission = true;
+					}
+				}else if (createFileName === 'CreateCICDDashboard.html') {
+					if (haspermission('services', 'modify')) {
+						hasEditPermission = true;
+					}
+				}else if (createFileName === 'createBotEngine.html') {
+					if (haspermission('services', 'modify')) {
 						hasEditPermission = true;
 					}
 				}
@@ -845,6 +863,14 @@ function CreateTableFromJson(formID, idFieldName, createFileName) {
 					}
 				} else if (createFileName === 'CreateNexusServer.html') {
 					if (haspermission('puppetserver', 'delete')) {
+						hasDeletePermission = true;
+					}
+				}else if (createFileName === 'CreateCICDDashboard.html') {
+					if (haspermission('services', 'delete')) {
+						hasDeletePermission = true;
+					}
+				}else if (createFileName === 'createBotEngine.html') {
+					if (haspermission('services', 'delete')) {
 						hasDeletePermission = true;
 					}
 				}
@@ -1277,8 +1303,7 @@ function readform(formID) {
 					$.each(tempJSON, function(i, item) {
 						_rowid = item['rowid'];
 						$.each(item, function(k, v) { //columns
-							//console.log('1 k:' + k + ' 1 v :' + JSON.stringify(v));
-							if (k == curSelect.attr("id") && curSelect.attr("ignoreoption") != v) {
+							if (k == curSelect.attr("id") && curSelect.attr("ignoreoption") != v && curSelect.attr("ignoreComposite") != v) {
 								curSelect.append('<option value="' + v + '" rowid = "' + _rowid + '">' + v + '</option>');
 							}
 						});
@@ -2162,7 +2187,6 @@ function CreateTableFromJsonNew(formID, idFieldName, createFileName) {
 
 function saveform(formID, operationTypes) {
 	//Validating the form
-
 	if (formID === "7") {
 		if (isFormValid(formID) == false || !validateUserForm(formID)) {
 			return (false);
@@ -2185,7 +2209,6 @@ function saveform(formID, operationTypes) {
 		if (isFormValid(formID) == false)
 			return (false);
 	}
-
 	var data1 = new FormData();
 	var fileNames = '';
 	var orgName = $('#orgname').val().trim();
@@ -2419,6 +2442,7 @@ function saveform(formID, operationTypes) {
 	    data1.append('password', password);
 	}*/
 	console.log(orgName);
+	console.log(data1);
 	// alert(serviceURL + "savemasterjsonrownew/" + formID + "/" + fileNames + "/" + orgName );
 	$.ajax({
 		url: serviceURL + "savemasterjsonrownew/" + formID + "/" + fileNames + "/" + orgName,
@@ -2438,6 +2462,8 @@ function saveform(formID, operationTypes) {
 				button.removeAttr("rowid", "");
 				$("#masterssavespinner").detach();
 				button.removeAttr('disabled');
+				$('.saveFormWizard').attr('disabled',true);
+				$('.nextFormWizard').removeAttr('disabled','disabled');
 			} else {
 				$(".savespinner").hide();
 				button.removeAttr("rowid", "");
@@ -2848,10 +2874,11 @@ function loadactioncheckboxes(receipectrls) {
 		var $servicecookbookcheckbox = $('#' + v1 + 'checkbox'),
 			attr = $servicecookbook.attr('savedvalue');
 		if ($servicecookbook.length && $servicecookbookcheckbox.length) {
-			if (attr && (attr.trim() === 'none' || attr.trim() === '')) {
-				$servicecookbookcheckbox.removeAttr('checked');
-			} else {
+			if(typeof attr != "undefined" && attr.trim() != 'none' && attr.trim() != ''){
 				$servicecookbookcheckbox.attr('checked','checked');
+			}
+			else{
+				$servicecookbookcheckbox.removeAttr('checked');
 			}
 
 		}
@@ -3031,6 +3058,7 @@ function getProjectsForOrg(orgname) {
 //function injects a error label for the input control and puts the message
 function errormessageforInput(id, msg) {
 	// alert(id);
+	
 	var errlabel = $('#errmsg_' + id);
 	var uniquelbl = $('#unique_' + id);
 
@@ -3116,7 +3144,7 @@ function isFormValidAzure(formid, option) {
 			}
 		});
 	}
-
+   
 	$('[' + option + ']').each(function(itm) {
 		var currCtrl = $(this);
 		var valiarr = $(this).attr(option).split(',');
@@ -3311,7 +3339,6 @@ function isFormValidOpenStack(formid, option) {
 
 function isFormValid(formid) {
 	var isValid = true;
-
 	if ($('input[unique="true"], select[unique="true"]').length > 0) {
 		// alert('in isFormValid');
 		$('input[unique="true"], select[unique="true"]').each(function() {
@@ -3335,7 +3362,6 @@ function isFormValid(formid) {
 		}
 		var password = $('#password').val();
 		var cnfPassword = $('#cnfPassword').val();
-
 		//alert(currCtrl.attr('id'));
 		$.each(valiarr, function(vali) {
 			switch (valiarr[vali]) {
@@ -3366,7 +3392,7 @@ function isFormValid(formid) {
 					//regex from stackoverflow(check-if-url-is-valid-or-not)
 					if (/(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/.test(str) == false) {
 						isValid = false;
-						errormessageforInput(currCtrl.attr('id'), "&nbsp;<i>Please enter a valid URL.<i>");
+						errormessageforInput(currCtrl.attr('id'), "Please enter a valid URL");
 						currCtrl.focus();
 					}
 					break;
@@ -3416,25 +3442,37 @@ function isFormValid(formid) {
 						currCtrl.focus();
 					}
 					break;
+				case "ipAddressCheck":
+					var str = currCtrl.val();
+					if(/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(str) == false && str != '') {
+						isValid = false;
+						errormessageforInput(currCtrl.attr('id'), "Please enter a valid IP Address");
+						currCtrl.focus();
+					}
+					break;
 				case "min8":
 					var str = currCtrl.val();
 					if (str.length < 8) {
 						isValid = false;
 						errormessageforInput(currCtrl.attr('id'), "Atleast 8 characters required.");
 						currCtrl.focus();
-					}
-					if (!/\d/.test(str)) {
-						errormessageforInput(currCtrl.attr('id'), "Atleast a number required.");
-						currCtrl.focus();
-					}
-					if (!/[a-z]/.test(str)) {
-						errormessageforInput(currCtrl.attr('id'), "Atleast a lower case char is required.");
-						currCtrl.focus();
-					}
+					}else{
+						if (!/\d/.test(str)) {
+							isValid = false;
+							errormessageforInput(currCtrl.attr('id'), "Atleast a number required.");
+							currCtrl.focus();
+						}
+						if (!/[a-z]/.test(str)) {
+							isValid = false;
+							errormessageforInput(currCtrl.attr('id'), "Atleast a lower case char is required.");
+							currCtrl.focus();
+						}
 
-					if (!/[!@#$%^&*]/.test(str)) {
-						errormessageforInput(currCtrl.attr('id'), "Atleast a special char is required.");
-						currCtrl.focus();
+						/*if (!/[!@#$%^&*]/.test(str)) {
+							isValid = false;
+							errormessageforInput(currCtrl.attr('id'), "Atleast a special char is required.");
+							currCtrl.focus();
+						}*/
 					}
 					break;
 
@@ -3448,7 +3486,6 @@ function isFormValid(formid) {
 			}
 
 		});
-
 	});
 
 	if (formid && formid === 19) {
@@ -3701,4 +3738,8 @@ function aggregateTable(tableid, filterColumnNo, filterColumnValue, colsArr) {
 	//alert('in' + JSON.stringify(obj));
 
 	return obj;
+}
+
+String.prototype.capitalize = function() {
+    return this.charAt(0).toUpperCase() + this.slice(1);
 }
