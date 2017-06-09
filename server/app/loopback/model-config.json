@@ -1,0 +1,34 @@
+{
+  "_meta": {
+    "sources": [
+     
+      "./models"
+    ],
+    "mixins": [
+     
+      "./mixins"
+    ]
+  },
+  "User": {
+    "dataSource": "devops"
+  },
+  "AccessToken": {
+    "dataSource": "devops",
+    "public": false
+  },
+  "ACL": {
+    "dataSource": "devops",
+    "public": false
+  },
+  "RoleMapping": {
+    "dataSource": "devops",
+    "public": false,
+    "options": {
+      "strictObjectIDCoercion": true
+    }
+  },
+  "Role": {
+    "dataSource": "devops",
+    "public": false
+  }
+}

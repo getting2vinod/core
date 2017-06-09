@@ -319,7 +319,7 @@ $(document).ready(function() {
 		});
 	*/
 	// LOGOUT BUTTON
-	$('#logout a').click(function(e) {
+	$('a#signOut').click(function(e) {
 		//get the link
 		$.loginURL = $(this).attr('logoutlink');
 		// ask verification
@@ -346,7 +346,12 @@ $(document).ready(function() {
 	 */
 
 	function logout() {
-		window.location = $.loginURL;
+		if(isAngularIntegration){
+			doLogout();//implemented in authSetup.js
+		}
+		else{
+			window.location = $.loginURL;
+		}
 	}
 
 	/*

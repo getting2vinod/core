@@ -1,29 +1,13 @@
-# Catalyst Core Repository
+   [![Code Climate](https://codeclimate.com/github/RLOpenCatalyst/core/badges/gpa.svg)](https://codeclimate.com/github/RLOpenCatalyst/core)
+# RLCatalyst Core Repository
 Repository for RLCatalyst core
 
 
-#About RLCatalyst
-
-RLCatalyst is an end-to-end automation platform that helps enterprises adopt devops maturity and benefits. Catalyst is  powered by Chef and integrated with all major cloud providers like AWS, Azure, Openstack, VMware etc. It provides seamless Infrastructure Automation across data centers, environments, applications with Configuration Management & Service Orchestration to help enterprises achieve end-to-end IT DevOps Service Automation and being prepared for Web-scale IT.
-Few of the highlights of Catalyst are:
- * It helps in adopting intelligent devops – from Unmanaged->Managed->Self-Service->Self-Aware->Self Heal Infrastructure
- * It does Infrastructure automation, provisioning, Orchestration and management
- * It helps automating the entire ALM cycle from Continuous Integration->Testing->Continuous Deployment and works with all major CI/CD tools
- * It gives realtime-dashboard and alerts-based monitoring and remediation of cost, usage , health and performance of all IT assets
- * Powered by Chef and integrated with Docker
-
- ##RLCatalyst DevOps Platform
- 
-
- 
- **How you can make use of Catalyst:**  
-
-* **Infrastructure Provisioning and Management:** Do you need to provision infrastructure dynamically? Do you want to manage your heterogeneous environments? Do you want to control usage and cost? or Do you want to identify and retire your unused infrastructure? RLCatalyst has the solutions to all these challenges. It helps you towards a more efficient capacity planning and improved utilization
-* **Application Deployment:** RLcatalyst provides you a seamless experience of managing your ALM lifecycle, with its one-click application deployment, on any of your cloud providers. You can reduce your deployment time from weeks to days to hours with better quality with a focus on performance and health of the application. It works with all latest CI/CD tools- Jenkins, JIRA, BitBucket, Github, SonarQube etc to name a few.
-* **Monitoring and Tracking :** RLCatalyst provides you the near-real time information on the cost and usage of your infrastructure . This helps you to keep track of Cloud Capacity and to optimize your resources to ensure better utilization. 
-
 #Documentation
 Please see the detailed documentation at http://catalyst.readthedocs.org
+
+#Installation
+Installation manual can be found at http://catalyst.readthedocs.org/en/latest/install.html
  
 #Branching Strategy
 The central repository will have two branches with infinite lifetime
@@ -120,9 +104,16 @@ Otherwise you can file your issue in the RLCatalyst project and we will make sur
 To decrease the back and forth in issues, and to help us get to the bottom of them quickly, we use the issue template below.  You can copy/paste this template into the issue you are opening and edit it accordingly::
 
 ```
+  Bug description : [Description About Bug]
+
   Version:[Version of the project installed]
 
   Environment:[Details about the environment such as the Operating System, cookbook details, etc.]
+   Catalyst Version:[Tag or Latest Version]
+   OS Type and Version :
+   Versions of MongoDB , NodeJS:
+   Browser Type and Version:
+   Chef Client and Server Version:
 
   Scenario:[What you are trying to achieve and you can't?]
 
@@ -148,3 +139,16 @@ To decrease the back and forth in issues, and to help us get to the bottom of th
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  See the License for the specific language governing permissions and
  limitations under the License.
+
+ #API Documentation
+   First Install apidoc and run the below command for this.
+
+     npm install apidoc -g
+
+   For creating a API Documentation for any api, run the below command on terminal.
+   
+   apidoc -i myapp/ -o apidoc/ -t mytemplate/
+
+   Creates an apiDoc of all files within dir myapp/, uses template from dir mytemplate/ and put all output to dir apidoc/.
+   Without any parameter, apiDoc generate a documentation from all .cs .dart .erl .go .java .js .php .py .rb .ts files in current dir (incl. subdirs) and writes the output to ./doc/.
+
