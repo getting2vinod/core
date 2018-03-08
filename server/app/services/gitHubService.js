@@ -421,27 +421,58 @@ gitGubService.gitHubContentSync = function gitHubContentSync(gitHubId, botId,cal
         } else {
             formatGitHubResponse(result.gitHub,function(formattedGitHub){
                 var cmd;
-                if(formattedGitHub.repositoryType === 'Private' && formattedGitHub.authenticationType === 'token') {
-                    cmd = 'curl -u '+formattedGitHub.repositoryUserName+':'+formattedGitHub.repositoryToken+' -L ' ;
-                }else if(formattedGitHub.repositoryType === 'Private' && formattedGitHub.authenticationType === 'userName') {
-                    cmd = 'curl -u '+formattedGitHub.repositoryUserName+':'+formattedGitHub.repositoryPassword+' -L ' ;
-                }else if(formattedGitHub.repositoryType === 'Private' && formattedGitHub.authenticationType === 'sshKey') {
-                    cmd = 'curl -u '+formattedGitHub.repositoryUserName+':'+formattedGitHub.repositoryPassword+' -L ' ;
-                }else{
-                    cmd = 'curl -L '
-                }
+
+                    if(formattedGitHub.repositoryType === 'Private' && formattedGitHub.authenticationType === 'token') {
+                        cmd = 'curl -u '+formattedGitHub.repositoryUserName+':'+formattedGitHub.repositoryToken+' -L ' ;
+                    }else if(formattedGitHub.repositoryType === 'Private' && formattedGitHub.authenticationType === 'userName') {
+                        cmd = 'curl -u '+formattedGitHub.repositoryUserName+':'+formattedGitHub.repositoryPassword+' -L ' ;
+                    }else if(formattedGitHub.repositoryType === 'Private' && formattedGitHub.authenticationType === 'sshKey') {
+                        cmd = 'curl -u '+formattedGitHub.repositoryUserName+':'+formattedGitHub.repositoryPassword+' -L ' ;
+                    }else{
+                        cmd = 'curl -L '
+                    }
+
+
                 async.parallel([
                     function(callback) {
                         if(result.botsDetails[0].type ==='script') {
-                            var cmdFull = cmd + 'https://api.github.com/repos/' + formattedGitHub.repositoryOwner + '/' + formattedGitHub.repositoryName + '/contents/Code/'+result.botsDetails[0].type+'_BOTs/' + result.botsDetails[0].id + '?ref=' + formattedGitHub.repositoryBranch;
-                            gitHubSingleSync(formattedGitHub, cmdFull, cmd, callback);
+                            // https://api.bitbucket.org/1.0/repositories/getting2vinod/botsfactory/src/master/Code/script_BOTs/run_ps_bot
+                            var cmdFull = "";
+                            var cmdRawFile = "";
+                            if(formattedGitHub.repoMode == "Git")
+                            {
+                                cmdFull = cmd + 'https://api.github.com/repos/' + formattedGitHub.repositoryOwner + '/' + formattedGitHub.repositoryName + '/contents/Code/'+result.botsDetails[0].type+'_BOTs/' + result.botsDetails[0].id + '?ref=' + formattedGitHub.repositoryBranch;
+                                gitHubSingleSync(formattedGitHub, cmdFull, cmd, callback);
+                            }
+                            else
+                            {
+                                cmdFull = cmd + "https://api.bitbucket.org/1.0/repositories/" + formattedGitHub.repositoryOwner + '/' + formattedGitHub.repositoryName + '/src/' + formattedGitHub.repositoryBranch + '/Code/'+result.botsDetails[0].type+'_BOTs/' + result.botsDetails[0].id;
+                                cmdRawFile = cmd + "https://api.bitbucket.org/1.0/repositories/" + formattedGitHub.repositoryOwner + '/' + formattedGitHub.repositoryName + '/raw/' + formattedGitHub.repositoryBranch+'/';
+                                bitbucketSingleSync(formattedGitHub,cmdFull,cmd,cmdRawFile,callback);
+                            }
+
+
                         }else{
                             callback(null,result.botsDetails[0]);
                         }
                     },
                     function(callback) {
-                        var cmdFull = cmd  +'https://api.github.com/repos/'+formattedGitHub.repositoryOwner+'/'+formattedGitHub.repositoryName+'/contents/YAML/'+result.botsDetails[0].id+'.yaml?ref='+formattedGitHub.repositoryBranch;
-                        gitHubSingleSync(formattedGitHub,cmdFull,cmd,callback);
+                        var cmdFull = "";
+                        var cmdRawFile = "";
+                        //https://api.bitbucket.org/1.0/repositories/getting2vinod/botsfactory/src/master/YAML/run_ps_bot.yaml
+                        if(formattedGitHub.repoMode == "Git")
+                        {
+                            cmdFull = cmd  +'https://api.github.com/repos/'+formattedGitHub.repositoryOwner+'/'+formattedGitHub.repositoryName+'/contents/YAML/'+result.botsDetails[0].id+'.yaml?ref='+formattedGitHub.repositoryBranch;
+                            gitHubSingleSync(formattedGitHub,cmdFull,cmd,callback);
+                        }
+                        else
+                        {
+                            cmdFull = cmd + "https://api.bitbucket.org/1.0/repositories/" + formattedGitHub.repositoryOwner+'/'+formattedGitHub.repositoryName+"/src/"+formattedGitHub.repositoryBranch+"/YAML/"+result.botsDetails[0].id;
+                            cmdRawFile = cmd + "https://api.bitbucket.org/1.0/repositories/" + formattedGitHub.repositoryOwner+'/'+formattedGitHub.repositoryName+"/raw/"+formattedGitHub.repositoryBranch+"/";
+                            bitbucketSingleSync(formattedGitHub,cmdFull,cmd,cmdRawFile,callback);
+                        }
+
+
                     }
                 ],function(err,res){
                     if(err){
@@ -786,6 +817,108 @@ function gitHubCloning(gitHubDetails,task,cmd,callback){
         });
     }
 }
+
+function bitbucketSingleSync(gitHubDetails,cmdFull,cmd,cmdRawFile,callback) {
+    var filepath = appConfig.botCurrentFactoryDir;
+    var upload = appConfig.botFactoryDir+'upload/';
+    if(fs.existsSync(upload))
+        fse.removeSync(upload);
+    execCmd(cmdFull, function (err, out, code) {
+        if(err === null && out.trim() !== '404: Not Found'){
+            var response = JSON.parse(out);
+            if(response.files){
+                for (var index = 0; index < response.files.length; index++) {
+
+                    writeFile(cmdRawFile+response.files[index].path,function(err,res){
+                        if(err) {
+                            //callback(err,null)
+                            logger.error('Error extracting file : ' + err);
+                        } else{
+                           // callback(null,res)
+                            logger.info('Wrote file ' + response[index].path);
+                        }
+                    })
+
+                }
+            }else {
+                writeFile(cmdRawFile+response.path,function(err,res){
+                    if(err) {
+                        callback(err,null)
+                    } else{
+                        callback(null,res)
+                    }
+                })
+            }
+            //checking for folders
+            if(response.directories){
+                for(var index = 0; index < response.directories.legth; index++){
+                    bitbucketSingleSync(gitHubDetails,cmdFull+"/" + response.directories[index],cmd,cmdRawFile,function(errbbss,nresp){
+                        if(errbbss){
+                            logger.error('Error processing directory ' + errbbss);
+                        }
+                        else{
+                            //nothing to do
+                        }
+                    })
+                }
+            }
+        }else{
+            var err = new Error('Invalid Bitbucket Credentials Details');
+            err.status = 400;
+            err.msg = 'Invalid Bitbucket Details';
+            callback(err, null);
+            return;
+        }
+    });
+    function writeFile(cmd,callback){
+        execCmd(cmd,function(err,out,code) {
+            if(err === null && out.trim() !== '404: Not Found'){
+                var fileres = JSON.parse(out);
+                var destFile = filepath+fileres.path;
+                var uploadFile = upload+fileres.path;
+                async.parallel([
+                    function(callback) {
+                        if(!fs.existsSync(destFile)) {
+                            mkdirp(getDirName(destFile), function (err) {
+                                if(err){
+                                    logger.error(err);
+                                } else{
+                                    fs.writeFile(destFile,new Buffer(fileres.content, fileres.encoding).toString(),callback);
+                                }
+                            });
+                        } else {
+                            fs.writeFile(destFile,new Buffer(fileres.content, fileres.encoding).toString(),callback);
+                        }
+                    },
+                    function(callback) {
+                        if(!fs.existsSync(uploadFile)) {
+                            mkdirp(getDirName(uploadFile), function (err) {
+                                if(err){
+                                    logger.error(err);
+                                } else{
+                                    fs.writeFile(uploadFile,new Buffer(fileres.content, fileres.encoding).toString(),callback);
+                                }
+                            });
+                        } else {
+                            fs.writeFile(uploadFile,new Buffer(fileres.content, fileres.encoding).toString(),callback);
+                        }
+                    }
+                ],function(err){
+                    if(err){
+                        callback(err,null);
+                        return;
+                    }else{
+                        callback(null,gitHubDetails);
+                        return;
+                    }
+                });
+            }else{
+                logger.debug("Individual Sync is going on");
+            }
+        });
+    }
+}
+
 function gitHubSingleSync(gitHubDetails,cmdFull,cmd,callback) {
     var filepath = appConfig.botCurrentFactoryDir;
     var upload = appConfig.botFactoryDir+'upload/';
