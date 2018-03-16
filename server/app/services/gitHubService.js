@@ -830,19 +830,43 @@ function bitbucketSingleSync(gitHubDetails,cmdFull,cmd,cmdRawFile,folderpath,cal
         if(err === null && out.trim() !== '404: Not Found'){
             var response = JSON.parse(out);
             if(response.files){
-                for (var index = 0; index < response.files.length; index++) {
-
-                    writeFile(cmdRawFile,response.files[index].path,folderpath,function(err,res){
+                async.each(response.files,function(responsefile){
+                    logger.info('About to write file : ' + responsefile.path);
+                    writeFile(cmdRawFile,responsefile.path,folderpath,function(err,res){
                         if(err) {
                             //callback(err,null)
                             logger.error('Error extracting file : ' + err);
                         } else{
-                           // callback(null,res)
-                            logger.info('Wrote file ' + response[index].path);
+                            // callback(null,res)
+                            logger.info('Wrote file ');
                         }
                     })
 
-                }
+
+                },function(errwrite){
+                    if(!errwrite){
+                        callback(null,gitHubDetails);
+                    }
+                    else{
+                        logger.error('Error in bitbucket file download :' + errwrite);
+                        callback(errwrite,null);
+                    }
+                })
+
+                // for (var index = 0; index < response.files.length; index++) {
+                //
+                //     writeFile(cmdRawFile,response.files[index].path,folderpath,function(err,res){
+                //         if(err) {
+                //             //callback(err,null)
+                //             logger.error('Error extracting file : ' + err);
+                //         } else{
+                //            // callback(null,res)
+                //             logger.info('Wrote file ' + response[index].path);
+                //         }
+                //         if()
+                //     })
+                //
+                // }
             }else {
                 writeFile(cmdRawFile,response.path,folderpath,function(err,res){
                     if(err) {
@@ -854,13 +878,15 @@ function bitbucketSingleSync(gitHubDetails,cmdFull,cmd,cmdRawFile,folderpath,cal
             }
             //checking for folders
             if(response.directories){
-                for(var index = 0; index < response.directories.legth; index++){
+                for(var index = 0; index < response.directories.length; index++){
                     bitbucketSingleSync(gitHubDetails,cmdFull+"/" + response.directories[index],cmd,cmdRawFile,folderpath+response.directories[index],function(errbbss,nresp){
                         if(errbbss){
                             logger.error('Error processing directory ' + errbbss);
+                            callback(errbbs,null);
                         }
                         else{
                             //nothing to do
+                            callback(null,nresp);
                         }
                     })
                 }
@@ -873,7 +899,8 @@ function bitbucketSingleSync(gitHubDetails,cmdFull,cmd,cmdRawFile,folderpath,cal
             return;
         }
     });
-    function writeFile(cmd,filefullpath,folderpath,callback){
+    function writeFile(cmd,filefullpath,folderpath,callbacktop){
+        //exec will output raw contents.
         execCmd(cmd + filefullpath,function(err,out,code) {
             logger.info(cmd);
             if(err === null && out.trim() !== '404: Not Found'){
@@ -881,38 +908,56 @@ function bitbucketSingleSync(gitHubDetails,cmdFull,cmd,cmdRawFile,folderpath,cal
                 var destFile = filepath+filefullpath;
                 var uploadFile = upload+filefullpath;
                 async.parallel([
-                    function(callback) {
+                    function(cb) {
                         if(!fs.existsSync(destFile)) {
                             mkdirp(getDirName(destFile), function (err) {
                                 if(err){
                                     logger.error(err);
                                 } else{
-                                    fs.writeFile(destFile,new Buffer(fileres.content, fileres.encoding).toString(),callback);
+                                    logger.info('Writing non existing file 1 : ' + destFile);
+                                    fs.writeFile(destFile,out,cb);
+
                                 }
                             });
                         } else {
-                            fs.writeFile(destFile,new Buffer(fileres.content, fileres.encoding).toString(),callback);
+                            logger.info('Writing file 1 : ' + destFile);
+                            fs.writeFile(destFile,out,cb);
+
                         }
                     },
-                    function(callback) {
+                    function(cb) {
                         if(!fs.existsSync(uploadFile)) {
                             mkdirp(getDirName(uploadFile), function (err) {
                                 if(err){
                                     logger.error(err);
                                 } else{
-                                    fs.writeFile(uploadFile,new Buffer(fileres.content, fileres.encoding).toString(),callback);
+                                    logger.info('Writing non existing file 2 : ' + uploadFile);
+                                    fs.writeFile(uploadFile,out,function (errwfy,wr) {
+                                        if(errwfy){
+                                            logger.error("Error writing file : " + errwfy);
+                                            cb;
+                                        }
+                                        else{
+                                            logger.info('Wrote file.' + wr);
+                                            cb;
+                                        }
+                                    });
                                 }
                             });
                         } else {
-                            fs.writeFile(uploadFile,new Buffer(fileres.content, fileres.encoding).toString(),callback);
+                            logger.info('Writing file 2 : ' + uploadFile);
+                            fs.writeFile(uploadFile,out,cb);
                         }
                     }
                 ],function(err){
                     if(err){
-                        callback(err,null);
+                        callbacktop(err,null);
                         return;
                     }else{
-                        callback(null,gitHubDetails);
+                        logger.info('Exiting for 1' + destFile);
+                        logger.info('Exiting for 2' + uploadFile);
+
+                        callbacktop(null,uploadFile);
                         return;
                     }
                 });
