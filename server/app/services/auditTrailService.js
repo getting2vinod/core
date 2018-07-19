@@ -301,6 +301,10 @@ auditTrailService.getAuditTrailList = function getAuditTrailList(auditTrailQuery
     });
 }
 
+//Fetching
+
+
+
 auditTrailService.syncCatalystWithServiceNow = function syncCatalystWithServiceNow(auditTrailId,callback){
     var srnTicketNo = null;
     async.waterfall([
@@ -325,6 +329,7 @@ auditTrailService.syncCatalystWithServiceNow = function syncCatalystWithServiceN
                             host: srnServerDetails[0].url,
                             ticketNo: srnTicketNo
                         };
+
                         serviceNow.getConfigItems(tableName, config, function (err, ticketData) {
                             if (err) {
                                 logger.error("Error in Getting Servicenow Config Items:", err);
@@ -352,7 +357,9 @@ auditTrailService.syncCatalystWithServiceNow = function syncCatalystWithServiceN
                                     state: checkServiceNowTicketState(ticketData.result.incident_state),
                                     priority: checkServiceNowTicketPriority(ticketData.result.priority),
                                     category: ticketData.result.category,
-                                    resolvedBy:ticketData.result.resolved_by
+                                    resolvedBy:ticketData.result.resolved_by,
+                                    tableName:tableName,
+                                    configName : "SNOW_Prod"
                                 };
                                 var botAuditTrail = require('_pr/model/audit-trail/bot-audit-trail.js');
                                 botAuditTrail.updateBotAuditTrail(auditTrailId, {
@@ -375,7 +382,18 @@ auditTrailService.syncCatalystWithServiceNow = function syncCatalystWithServiceN
                     }
                 });
             }else{
-                logger.info("There is no records are available for Service Now Ticket Sync");
+                //handling when no service now details are available
+                if(botAuditTrail.length > 0){
+                    //find if ticketNo is present
+
+                }
+
+
+
+
+
+
+                    logger.info("There is no records are available for Service Now Ticket Sync");
                 next(null,null);
             }
         }
