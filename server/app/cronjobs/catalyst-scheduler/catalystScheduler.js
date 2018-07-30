@@ -8,6 +8,10 @@ var async = require('async');
 var cronTab = require('node-crontab');
 var auditQueue = require('_pr/config/global-data.js');
 var catalystSync = module.exports = {};
+var uuid = require('node-uuid');
+var botService = require('_pr/services/botService');
+var botAuditTrail = require('_pr/model/audit-trail/bot-audit-trail.js');
+var auditTrailService = require('_pr/services/auditTrailService');
 
 catalystSync.executeScheduledInstances = function executeScheduledInstances() {
     logger.debug("Instance Scheduler is started. ");
@@ -252,6 +256,154 @@ catalystSync.getBotAuditLogData = function getBotAuditLogData(){
         }
     },5000)
 }
+
+catalystSync.syncServiceNowForBotRuns = function syncServiceNowForBotRuns(){
+    //fetch bot details
+    logger.info("Starting SNOW sync service for Bots");
+    setInterval( function () {
+        var refId = [];
+        var uid = uuid.v4();
+        refId.push(uid);
+        refId.push("Snow Explicit Sync");
+        logger.info("Running SNOW sync for Bots");
+        async.waterfall([
+            function (next) {
+                //res.status(202).send("Sync started. Use /audit-trail/task-action/"+ uid + "/logs to track" );
+                botService.getLastSnowBotsExecuted(60*24*15, next)
+            },
+            function (botlist, next) {
+                logger.info(JSON.stringify(botlist));
+                async.eachSeries(botlist, function (botid, nextbot) {
+                    botid = botid.id;
+                    logger.info("Processing BOT : " + botid);
+                    botService.getBotById(botid, function (err, bot) {
+                        if (err) {
+                            logger.error(err);
+                            return err;
+                        }
+                        else {
+                            //return res.status(200).send(bot);
+                            //fetching audit log for bot
+                            if (Array.isArray(bot)) {
+                                bot = bot[0];
+                            }
+                            if (bot) {
+                                var auditId = bot._id.toString();
+                                botAuditTrail.find({"auditId": auditId}, function (errba, auditlist) {
+                                    if (err) {
+                                        logger.error(errba);
+                                        nextbot(errba);
+                                    }
+                                    else {
+                                        //return res.status(200).send(auditlist[0]);
+                                        //generating a log re
+
+                                        // logsDao.insertLog({
+                                        //     referenceId: refId,
+                                        //     err: false,
+                                        //     log: "Starting Audit Sync for bot " + auditId + "Found " + auditlist.length + " entries.",
+                                        //     timestamp: new Date().getTime()
+                                        // });
+
+
+                                        var count = 0;
+                                        async.eachSeries(auditlist, function (audit, callback) {
+                                            count++;
+                                            logger.info("Trying to Sync : " + audit._id.toString());
+                                            //push to sync only if the auditTrailConfig.serviceNowTicketRefObj.state is undefined
+                                            if (audit.auditTrailConfig.serviceNowTicketRefObj) {
+                                                if (!audit.auditTrailConfig.serviceNowTicketRefObj.state)
+                                                    auditTrailService.syncCatalystWithServiceNow(audit._id.toString(), function (err, srnTicketSync) {
+                                                        if (err) {
+                                                            logger.error(err);
+                                                            logger.error("Got an error during sync.");
+                                                            // logsDao.insertLog({
+                                                            //     referenceId: refId,
+                                                            //     err: true,
+                                                            //     log: err,
+                                                            //     timestamp: new Date().getTime()
+                                                            // });
+                                                        }
+                                                        else {
+                                                            logger.info("Updated audit item : " + audit._id.toString() + " Completed " + ((count / auditlist.length) * 100).toFixed(2) + "%");
+                                                            // logsDao.insertLog({
+                                                            //     referenceId: refId,
+                                                            //     err: false,
+                                                            //     log: "Updated audit item : " + audit._id.toString() + " Completed " + ((count/auditlist.length) * 100).toFixed(2) + "%",
+                                                            //     timestamp: new Date().getTime()
+                                                            // });
+                                                        }
+                                                        callback();
+                                                    });
+                                                else {
+                                                    logger.info("Skipping audit item : " + audit._id.toString() + ". State is defined.");
+                                                    // logsDao.insertLog({
+                                                    //     referenceId: refId,
+                                                    //     err: false,
+                                                    //     log: "Skipping audit item : " + audit._id.toString() + ". State is defined.",
+                                                    //     timestamp: new Date().getTime()
+                                                    // });
+                                                    callback();
+                                                }
+
+                                            }
+                                            else {
+                                                //no serviceNowObjectfound in audit
+                                                logger.error("serviceNowTicketRefObj is not defined for " + audit._id.toString());
+                                                // logsDao.insertLog({
+                                                //     referenceId: refId,
+                                                //     err: true,
+                                                //     log: "serviceNowTicketRefObj is not defined for " + audit._id.toString(),
+                                                //     timestamp: new Date().getTime()
+                                                // });
+                                                callback();
+                                            }
+
+                                        }, function (err1) {
+                                            if (err1) {
+                                                logger.error(err1);
+                                                logger.error("Got an error during sync. Terminating.");
+                                                // logsDao.insertLog({
+                                                //     referenceId: refId,
+                                                //     err: true,
+                                                //     log: err1,
+                                                //     timestamp: new Date().getTime()
+                                                // });
+                                            }
+                                            else {
+                                                logger.info("Completed Sync");
+                                                // logsDao.insertLog({
+                                                //     referenceId: refId,
+                                                //     err: false,
+                                                //     log: "Completed Sync",
+                                                //     timestamp: new Date().getTime()
+                                                // });
+                                            }
+                                            nextbot();
+
+                                        })
+                                    }
+
+                                })
+                            }
+                            else {
+                                logger.error("Bot : " + req.params.botid + " not found");
+                                nextbot();
+                            }
+                        }
+                    })
+                }, next)
+
+
+            }
+
+        ], function (errwf) {
+            if (errwf) {
+                return (errwf);
+            }
+        })
+    },1000 * 60 * 15); //1000 * 60 * 15
+    }
 
 function cancelOldCronJobs(ids){
     if(ids.length > 0){

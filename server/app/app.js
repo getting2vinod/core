@@ -233,6 +233,7 @@ catalystSync.executeParallelScheduledTasks();
 catalystSync.executeScheduledBots();
 catalystSync.executeNewScheduledBots();
 catalystSync.getBotAuditLogData();
+catalystSync.syncServiceNowForBotRuns();
 server.listen(app.get('port'), function() {
     logger.debug('Express server listening on port ' + app.get('port'));
     require('_pr/services/noticeService.js').init(io,server.address());
