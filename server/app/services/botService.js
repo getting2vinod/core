@@ -970,6 +970,15 @@ botService.getScheduledBotList = function getScheduledBotList(botId, callback) {
     })
 }
 
+botService.getLastSnowBotsExecuted = function (minutes,callback) {
+    var query = [{$unwind:'$input'},{$match:{'input.name':'sysid',"lastRunTime":{$gte:new Date().getTime() - (1000*60*minutes)}}},{$project:{_id:0,id:'$id'}}];
+    botDao.aggregate(query,function(err,bots){
+        if(!err){
+            callback(null,bots);
+        }
+    })
+}
+
 function encryptedParam(paramDetails, callback) {
     var cryptoConfig = appConfig.cryptoSettings;
     var cryptography = new Cryptography(cryptoConfig.algorithm, cryptoConfig.password);
